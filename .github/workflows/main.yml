@@ -18,14 +18,21 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Deploy to Apache Server
+    - name: Install Apache and Deploy Files
       run: |
         # Define variables
         SERVER_USER="ubuntu"
         SERVER_IP="44.206.252.243"
         REMOTE_DIR="/var/www/html"
+        PRIVATE_KEY_PATH="~/.ssh/id_rsa"
 
-        # Sync files to the server using rsync
+        # Install Apache if not installed
+        ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} "sudo apt-get update && sudo apt-get install -y apache2"
+
+        # Start and enable Apache
+        ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} "sudo systemctl enable apache2 && sudo systemctl start apache2"
+
+        # Use rsync to deploy files
         rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}
 
         # Set correct permissions
